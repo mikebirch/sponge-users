@@ -1,0 +1,53 @@
+<?php
+/**
+ * Copyright 2010 - 2017, Cake Development Corporation (https://www.cakedc.com)
+ *
+ * Licensed under The MIT License
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright Copyright 2010 - 2017, Cake Development Corporation (https://www.cakedc.com)
+ * @license MIT License (http://www.opensource.org/licenses/mit-license.php)
+ */
+?>
+
+<?php if($userData['is_superuser']) : ?>
+<p><?= $this->Html->link('New user', ['action' => 'add'],['class' => 'btn button']) ?></p>
+<?php endif ?>
+
+<table cellpadding="0" cellspacing="0">
+    <thead>
+    <tr>
+        <th class="actions">&nbsp;</th>
+        <th><?= $this->Paginator->sort('username', __d('CakeDC/Users', 'Username')) ?></th>
+        <th><?= $this->Paginator->sort('email', __d('CakeDC/Users', 'Email')) ?></th>
+        <th><?= $this->Paginator->sort('first_name', __d('CakeDC/Users', 'First name')) ?></th>
+        <th><?= $this->Paginator->sort('last_name', __d('CakeDC/Users', 'Last name')) ?></th>
+        <th><?= $this->Paginator->sort('role') ?></th>
+
+    </tr>
+    </thead>
+    <tbody>
+    <?php foreach (${$tableAlias} as $user) : ?>
+        <tr>
+            <td class="actions">
+                <?php if($userData['is_superuser']) : ?>
+                <?= $this->Delete->createForm(['action' => 'delete', $user->id]) ?>
+                <?php endif ?>
+                <?= $this->Html->link('View', ['action' => 'view', $user->id]) ?>
+                <?php if($userData['is_superuser']) : ?>
+                <?= $this->Html->link('Change password', ['action' => 'changePassword', $user->id]) ?>
+                <?= $this->Html->link('Edit', ['action' => 'edit', $user->id]) ?>
+                <?php endif ?>
+            </td>
+            <td><?= h($user->username) ?></td>
+            <td><?= h($user->email) ?></td>
+            <td><?= h($user->first_name) ?></td>
+            <td><?= h($user->last_name) ?></td>
+            <td><?= h($user->role) ?></td>
+
+        </tr>
+
+    <?php endforeach; ?>
+    </tbody>
+</table>
+
