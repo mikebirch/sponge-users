@@ -45,7 +45,7 @@ class SpongeUsersController extends AppController
         $this->set($tableAlias, $this->paginate($table));
         $this->set('tableAlias', $tableAlias);
         $this->set('_serialize', [$tableAlias, 'tableAlias']);
-        $this->viewBuilder()->layout('admin');
+        $this->viewBuilder()->setLayout('admin');
     }
 
     /**
@@ -66,7 +66,7 @@ class SpongeUsersController extends AppController
         $this->set($tableAlias, $entity);
         $this->set('tableAlias', $tableAlias);
         $this->set('_serialize', [$tableAlias, 'tableAlias']);
-        $this->viewBuilder()->layout('admin');
+        $this->viewBuilder()->setLayout('admin');
     }
 
     /**
@@ -83,7 +83,7 @@ class SpongeUsersController extends AppController
         $this->set($tableAlias, $entity);
         $this->set('tableAlias', $tableAlias);
         $this->set('_serialize', [$tableAlias, 'tableAlias']);
-        $this->viewBuilder()->layout('admin');
+        $this->viewBuilder()->setLayout('admin');
         if (!$this->request->is('post')) {
             return;
         }
@@ -119,7 +119,7 @@ class SpongeUsersController extends AppController
         $this->set($tableAlias, $entity);
         $this->set('tableAlias', $tableAlias);
         $this->set('_serialize', [$tableAlias, 'tableAlias']);
-        $this->viewBuilder()->layout('admin');
+        $this->viewBuilder()->setLayout('admin');
         if (!$this->request->is(['patch', 'post', 'put'])) {
             return;
         }
@@ -164,7 +164,7 @@ class SpongeUsersController extends AppController
             $redirect = $this->Auth->getConfig('loginAction');
         }
         $this->set('validatePassword', $validatePassword);
-        $this->viewBuilder()->layout('admin');
+        $this->viewBuilder()->setLayout('admin');
         if ($this->request->is(['post', 'put'])) {
             try {
                 $validator = $this->getUsersTable()->validationPasswordConfirm(new Validator());
