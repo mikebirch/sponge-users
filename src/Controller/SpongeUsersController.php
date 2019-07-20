@@ -91,7 +91,7 @@ class SpongeUsersController extends AppController
         // add the next line to allow role to be edited
         // see https://stackoverflow.com/questions/44912295/cakedc-users-new-role
         // and https://github.com/CakeDC/users/issues/513
-        $entity->role = $this->request->data('role');
+        $entity->role = $this->request->getData('role');
         $singular = Inflector::singularize(Inflector::humanize($tableAlias));
         if ($table->save($entity)) {
             $this->Flash->success(__d('CakeDC/Users', 'The {0} has been saved', $singular));
