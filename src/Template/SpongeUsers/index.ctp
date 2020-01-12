@@ -23,7 +23,7 @@
         <th><?= $this->Paginator->sort('first_name', __d('CakeDC/Users', 'First name')) ?></th>
         <th><?= $this->Paginator->sort('last_name', __d('CakeDC/Users', 'Last name')) ?></th>
         <th><?= $this->Paginator->sort('role') ?></th>
-
+        <th><?= $this->Paginator->sort('active') ?></th>
     </tr>
     </thead>
     <tbody>
@@ -44,7 +44,11 @@
             <td><?= h($user->first_name) ?></td>
             <td><?= h($user->last_name) ?></td>
             <td><?= h($user->role) ?></td>
-
+            <?php
+                $yes = '<svg class="icon icon-checkmark-circle"><use xlink:href="/img/admin/icons.svg#icon-checkmark-circle"></use></svg><span>Yes</span>';
+                $no = '<svg class="icon icon-cancel-circle"><use xlink:href="/img/admin/icons.svg#icon-cancel-circle"></use></svg><span>No</span>';
+            ?>
+            <td class=" hide-text"><?= h($user->active) == 1 ? $yes : $no ?></td>
         </tr>
 
     <?php endforeach; ?>
