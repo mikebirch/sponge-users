@@ -11,11 +11,19 @@
 
 $Users = ${$tableAlias};
 ?>
+<div class="page-top">
+    <?php if($userData['is_superuser']) : ?>
+    <div class="actions-menu">
+        <ul class="menu">
+            <li><?= $this->Delete->createForm(['action' => 'delete', $Users->id]) ?></li>
+            <li><?= $this->Html->link('Change password', ['action' => 'changePassword', $Users->id]) ?></li>
+            <li><?= $this->Html->link('Edit', ['action' => 'edit', $Users->id]) ?></li>
+        </ul>
+    </div>
+    <?php endif ?>
 
-<h2><?= h($Users->username) ?></h2>
-
-<h3><?= __d('CakeDC/Users', 'Username') ?></h3>
-<p><?= h($Users->username) ?></p>
+    <h2><?= h($Users->username) ?></h2>
+</div>
 <h3><?= __d('CakeDC/Users', 'Email') ?></h3>
 <p><?= h($Users->email) ?></p>
 <h3><?= __d('CakeDC/Users', 'First Name') ?></h3>
