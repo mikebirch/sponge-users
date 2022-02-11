@@ -11,6 +11,9 @@ use CakeDC\Users\Controller\Traits\ReCaptchaTrait;
 use CakeDC\Users\Controller\Traits\RegisterTrait;
 use CakeDC\Users\Controller\Traits\SimpleCrudTrait;
 use CakeDC\Users\Controller\Traits\SocialTrait;
+use CakeDC\Users\Exception\UserNotActiveException;
+use CakeDC\Users\Exception\UserNotFoundException;
+use CakeDC\Users\Exception\WrongPasswordException;
 use Cake\Utility\Inflector;
 use Cake\Event\Event;
 use Cake\Core\Configure;
@@ -196,7 +199,7 @@ class SpongeUsersController extends AppController
                 $this->Flash->error(__d('CakeDC/Users', 'User was not found'));
             } catch (WrongPasswordException $wpe) {
                 $this->Flash->error($wpe->getMessage());
-            } catch (Exception $exception) {
+            } catch (\Exception $exception) {
                 $this->Flash->error(__d('CakeDC/Users', 'Password could not be changed'));
                 $this->log($exception->getMessage());
             }
