@@ -1,13 +1,11 @@
 <?php
-use Cake\Routing\RouteBuilder;
-use Cake\Routing\Router;
 use Cake\Routing\Route\DashedRoute;
 
-Router::plugin(
+$routes->plugin(
     'SpongeUsers',
     ['path' => '/sponge-users'],
-    function (RouteBuilder $routes) {
-        $routes->connect('/', ['controller' => 'SpongeUsers', 'action' => 'index']);
-        $routes->fallbacks(DashedRoute::class);
+    function ($routes) {
+        $routes->setRouteClass(DashedRoute::class);
+        $routes->get('/', ['controller' => 'SpongeUsers', 'action' => 'index']);
     }
 );

@@ -10,7 +10,7 @@
  */
 ?>
 
-<?php if($userData['is_superuser']) : ?>
+<?php if($user->is_superuser) : ?>
 <p><?= $this->Html->link('New user', ['action' => 'add'],['class' => 'btn button']) ?></p>
 <?php endif ?>
 
@@ -30,11 +30,11 @@
     <?php foreach (${$tableAlias} as $user) : ?>
         <tr>
             <td class="actions">
-                <?php if($userData['is_superuser']) : ?>
+                <?php if($user->is_superuser) : ?>
                 <?= $this->Delete->createForm(['action' => 'delete', $user->id]) ?>
                 <?php endif ?>
                 <?= $this->Html->link('View', ['action' => 'view', $user->id]) ?>
-                <?php if($userData['is_superuser']) : ?>
+                <?php if($user->is_superuser) : ?>
                 <?= $this->Html->link('Change password', ['action' => 'changePassword', $user->id]) ?>
                 <?= $this->Html->link('Edit', ['action' => 'edit', $user->id]) ?>
                 <?php endif ?>

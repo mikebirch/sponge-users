@@ -12,7 +12,7 @@
 $Users = ${$tableAlias};
 ?>
 <div class="page-top">
-    <?php if($userData['is_superuser']) : ?>
+    <?php if($user->is_superuser) : ?>
     <div class="actions-menu">
         <ul class="menu">
             <li><?= $this->Delete->createForm(['action' => 'delete', $Users->id]) ?></li>

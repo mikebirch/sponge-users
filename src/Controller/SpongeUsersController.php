@@ -1,22 +1,18 @@
 <?php
+declare(strict_types=1);
+
 namespace SpongeUsers\Controller;
 
 use SpongeUsers\Controller\AppController;
-use CakeDC\Users\Model\Table\UsersTable;
-use CakeDC\Users\Controller\Component\UsersAuthComponent;
-use CakeDC\Users\Controller\Traits\LinkSocialTrait;
+use Cake\Controller\Component\AuthComponent;
 use CakeDC\Users\Controller\Traits\LoginTrait;
 use CakeDC\Users\Controller\Traits\ProfileTrait;
-use CakeDC\Users\Controller\Traits\ReCaptchaTrait;
-use CakeDC\Users\Controller\Traits\RegisterTrait;
-use CakeDC\Users\Controller\Traits\SimpleCrudTrait;
-use CakeDC\Users\Controller\Traits\SocialTrait;
-use CakeDC\Users\Exception\UserNotActiveException;
 use CakeDC\Users\Exception\UserNotFoundException;
 use CakeDC\Users\Exception\WrongPasswordException;
 use Cake\Utility\Inflector;
-use Cake\Event\Event;
 use Cake\Core\Configure;
+use Cake\Datasource\Exception\RecordNotFoundException;
+use Cake\Datasource\Exception\InvalidPrimaryKeyException;
 
 /**
  * SpongeUsers Controller
@@ -27,17 +23,49 @@ use Cake\Core\Configure;
 class SpongeUsersController extends AppController
 {
 
-    use LinkSocialTrait;
     use LoginTrait;
     use ProfileTrait;
-    use ReCaptchaTrait;
-    use RegisterTrait;
-    use SimpleCrudTrait;
-    use SocialTrait;
+
+    /**
+     * Profile action
+     *
+     * @param mixed $id Profile id object.
+     * @return mixed
+     */
+    public function profile($id = null)
+    {
+        $identity = $this->getRequest()->getAttribute('identity');
+        $identity = $identity ?? [];
+        $loggedUserId = $identity['id'] ?? null;
+        $isCurrentUser = false;
+        if (!Configure::read('Users.Profile.viewOthers') || empty($id)) {
+            $id = $loggedUserId;
+        }
+        try {
+            $appContain = (array)Configure::read('Auth.authenticate.' . AuthComponent::ALL . '.contain');
+            $socialContain = Configure::read('Users.Social.login') ? ['SocialAccounts'] : [];
+            $user = $this->getUsersTable()->get($id, [
+                    'contain' => array_merge((array)$appContain, (array)$socialContain),
+                ]);
+            $this->set('avatarPlaceholder', Configure::read('Users.Avatar.placeholder'));
+            if ($user->id === $loggedUserId) {
+                $isCurrentUser = true;
+            }
+        } catch (RecordNotFoundException $ex) {
+            $this->Flash->error(__d('cake_d_c/users', 'User was not found'));
+
+            return $this->redirect($this->getRequest()->referer());
+        } catch (InvalidPrimaryKeyException $ex) {
+            $this->Flash->error(__d('cake_d_c/users', 'Not authorized, please login first'));
+
+            return $this->redirect($this->getRequest()->referer());
+        }
+        $this->set(['user' => $user, 'isCurrentUser' => $isCurrentUser]);
+        $this->set('_serialize', ['user', 'isCurrentUser']);
+    }
 
     /**
      * Index method
-     * Override index method in CakeDC Users, SimpleCrudTrait.php
      *
      * @return void
      */
@@ -48,7 +76,7 @@ class SpongeUsersController extends AppController
         $this->set($tableAlias, $this->paginate($table));
         $this->set('tableAlias', $tableAlias);
         $this->set('_serialize', [$tableAlias, 'tableAlias']);
-        $this->viewBuilder()->setLayout('admin');
+        $this->viewBuilder()->setLayout('SpongeAdmin.admin');
     }
 
     /**
@@ -82,129 +110,186 @@ class SpongeUsersController extends AppController
     {
         $table = $this->loadModel();
         $tableAlias = $table->getAlias();
-        $entity = $table->newEntity();
+        $entity = $table->newEmptyEntity();
         $this->set($tableAlias, $entity);
         $this->set('tableAlias', $tableAlias);
         $this->set('_serialize', [$tableAlias, 'tableAlias']);
         $this->viewBuilder()->setLayout('admin');
-        if (!$this->request->is('post')) {
+        if (!$this->getRequest()->is('post')) {
             return;
         }
-        $entity = $table->patchEntity($entity, $this->request->getData());
+        $entity = $table->patchEntity($entity, $this->getRequest()->getData());
         // add the next line to allow role to be edited
         // see https://stackoverflow.com/questions/44912295/cakedc-users-new-role
         // and https://github.com/CakeDC/users/issues/513
         $entity->role = $this->request->getData('role');
         $singular = Inflector::singularize(Inflector::humanize($tableAlias));
         if ($table->save($entity)) {
-            $this->Flash->success(__d('CakeDC/Users', 'The {0} has been saved', $singular));
+            $this->Flash->success(__d('cake_d_c/users', 'The {0} has been saved', $singular));
 
             return $this->redirect(['action' => 'index']);
         }
-        $this->Flash->error(__d('CakeDC/Users', 'The {0} could not be saved', $singular));
+        $this->Flash->error(__d('cake_d_c/users', 'The {0} could not be saved', $singular));
     }
 
     /**
      * Edit method
-     * Override edit method in CakeDC Users, SimpleCrudTrait.php
      *
      * @param string|null $id User id.
      * @return mixed Redirects on successful edit, renders view otherwise.
-     * @throws NotFoundException When record not found.
+     * @throws \Cake\Http\Exception\NotFoundException When record not found.
      */
     public function edit($id = null)
     {
         $table = $this->loadModel();
         $tableAlias = $table->getAlias();
         $entity = $table->get($id, [
-            'contain' => []
+            'contain' => [],
         ]);
         $this->set($tableAlias, $entity);
         $this->set('tableAlias', $tableAlias);
         $this->set('_serialize', [$tableAlias, 'tableAlias']);
         $this->viewBuilder()->setLayout('admin');
-        if (!$this->request->is(['patch', 'post', 'put'])) {
+        if (!$this->getRequest()->is(['patch', 'post', 'put'])) {
             return;
         }
-        $entity = $table->patchEntity($entity, $this->request->getData());
+        $entity = $table->patchEntity($entity, $this->getRequest()->getData());
         // add the next line to allow role to be edited
         // see https://stackoverflow.com/questions/44912295/cakedc-users-new-role
         // and https://github.com/CakeDC/users/issues/513
         $entity->role = $this->request->getData('role');
         $singular = Inflector::singularize(Inflector::humanize($tableAlias));
         if ($table->save($entity)) {
-            $this->Flash->success('The user has been saved');
+            $this->Flash->success(__d('cake_d_c/users', 'The {0} has been saved', $singular));
 
             return $this->redirect(['action' => 'index']);
         }
-        $this->Flash->error('The user could not be saved');
+        $this->Flash->error(__d('cake_d_c/users', 'The {0} could not be saved', $singular));
     }
 
     /**
      * Change password
+     * Can be used while logged in for own password, as a superuser on any user, or while not logged in for reset
+     * reset password with session key (email token has already been validated)
      *
+     * @param int|string|null $id user_id, null for logged in user id
      * @return mixed
      */
-    public function changePassword()
+    public function changePassword($id = null)
     {
-        $user = $this->getUsersTable()->newEntity();
-        $id = $this->Auth->user('id');
-        if (!empty($id)) {
-            $user->id = $this->Auth->user('id');
-            $validatePassword = true;
-            //@todo add to the documentation: list of routes used
-            $redirect = Configure::read('Users.Profile.route');
-        } else {
-            $user->id = $this->request->getSession()->read(Configure::read('Users.Key.Session.resetPasswordUserId'));
-            $validatePassword = false;
-            if (!$user->id) {
-                $this->Flash->error(__d('CakeDC/Users', 'User was not found'));
-                $this->redirect($this->Auth->getConfig('loginAction'));
+        $user = $this->getUsersTable()->newEntity([], ['validate' => false]);
+        $user->setNew(false);
+
+        $identity = $this->getRequest()->getAttribute('identity');
+        $identity = $identity ?? [];
+        $userId = $identity['id'] ?? null;
+
+        if ($userId) {
+            if ($id && $identity['is_superuser'] && Configure::read('Users.Superuser.allowedToChangePasswords')) {
+                // superuser editing any account's password
+                $user->id = $id;
+                $validatePassword = false;
+                $redirect = ['action' => 'index'];
+            } elseif (!$id || $id === $userId) {
+                // normal user editing own password
+                $user->id = $userId;
+                $validatePassword = true;
+                $redirect = Configure::read('Users.Profile.route');
+            } else {
+                $this->Flash->error(
+                    __d('cake_d_c/users', 'Changing another user\'s password is not allowed')
+                );
+                $this->redirect(Configure::read('Users.Profile.route'));
 
                 return;
             }
-            //@todo add to the documentation: list of routes used
-            $redirect = $this->Auth->getConfig('loginAction');
+        } else {
+            // password reset
+            $user->id = $this->getRequest()->getSession()->read(
+                Configure::read('Users.Key.Session.resetPasswordUserId')
+            );
+            $validatePassword = false;
+            $redirect = $this->Authentication->getConfig('loginAction');
+            if (!$user->id) {
+                $this->Flash->error(__d('cake_d_c/users', 'User was not found'));
+                $this->redirect($redirect);
+
+                return;
+            }
         }
         $this->set('validatePassword', $validatePassword);
         $this->viewBuilder()->setLayout('admin');
-        if ($this->request->is(['post', 'put'])) {
+        if ($this->getRequest()->is(['post', 'put'])) {
             try {
                 $validator = $this->getUsersTable()->validationPasswordConfirm(new Validator());
-                if (!empty($id)) {
+                if ($validatePassword) {
                     $validator = $this->getUsersTable()->validationCurrentPassword($validator);
                 }
+                $this->getUsersTable()->setValidator('current', $validator);
                 $user = $this->getUsersTable()->patchEntity(
                     $user,
-                    $this->request->getData(),
-                    ['validate' => $validator]
+                    $this->getRequest()->getData(),
+                    [
+                        'validate' => 'current',
+                        'accessibleFields' => [
+                            'current_password' => true,
+                            'password' => true,
+                            'password_confirm' => true,
+                        ],
+                    ]
                 );
+
                 if ($user->getErrors()) {
-                    $this->Flash->error(__d('CakeDC/Users', 'Password could not be changed'));
+                    $this->Flash->error(__d('cake_d_c/users', 'Password could not be changed'));
                 } else {
                     $result = $this->getUsersTable()->changePassword($user);
                     if ($result) {
-                        $event = $this->dispatchEvent(UsersAuthComponent::EVENT_AFTER_CHANGE_PASSWORD, ['user' => $result]);
-                        if (!empty($event) && is_array($event->result)) {
-                            return $this->redirect($event->result);
+                        $event = $this->dispatchEvent(Plugin::EVENT_AFTER_CHANGE_PASSWORD, ['user' => $result]);
+                        if (!empty($event) && is_array($event->getResult())) {
+                            return $this->redirect($event->getResult());
                         }
-                        $this->Flash->success(__d('CakeDC/Users', 'Password has been changed successfully'));
+                        $this->Flash->success(__d('cake_d_c/users', 'Password has been changed successfully'));
 
                         return $this->redirect($redirect);
                     } else {
-                        $this->Flash->error(__d('CakeDC/Users', 'Password could not be changed'));
+                        $this->Flash->error(__d('cake_d_c/users', 'Password could not be changed'));
                     }
                 }
             } catch (UserNotFoundException $exception) {
-                $this->Flash->error(__d('CakeDC/Users', 'User was not found'));
+                $this->Flash->error(__d('cake_d_c/users', 'User was not found'));
             } catch (WrongPasswordException $wpe) {
                 $this->Flash->error($wpe->getMessage());
-            } catch (\Exception $exception) {
-                $this->Flash->error(__d('CakeDC/Users', 'Password could not be changed'));
+            } catch (Exception $exception) {
+                $this->Flash->error(__d('cake_d_c/users', 'Password could not be changed'));
                 $this->log($exception->getMessage());
             }
         }
-        $this->set(compact('user'));
+        $this->set(['user' => $user]);
         $this->set('_serialize', ['user']);
+    }
+
+    /**
+     * Delete method
+     *
+     * @param string|null $id User id.
+     * @return \Cake\Http\Response Redirects to index.
+     * @throws \Cake\Http\Exception\NotFoundException When record not found.
+     */
+    public function delete($id = null)
+    {
+        $this->getRequest()->allowMethod(['post', 'delete']);
+        $table = $this->loadModel();
+        $tableAlias = $table->getAlias();
+        $entity = $table->get($id, [
+            'contain' => [],
+        ]);
+        $singular = Inflector::singularize(Inflector::humanize($tableAlias));
+        if ($table->delete($entity)) {
+            $this->Flash->success(__d('cake_d_c/users', 'The {0} has been deleted', $singular));
+        } else {
+            $this->Flash->error(__d('cake_d_c/users', 'The {0} could not be deleted', $singular));
+        }
+
+        return $this->redirect(['action' => 'index']);
     }
 }
