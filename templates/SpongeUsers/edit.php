@@ -27,19 +27,6 @@ $Users = ${$tableAlias};
             'admin' => 'Administrator',
         ],
     ]);
-    echo $this->Form->control('token', ['label' => __d('CakeDC/Users', 'Token')]);
-    echo $this->Form->control('token_expires', [
-        'label' => __d('CakeDC/Users', 'Token expires')
-    ]);
-    echo $this->Form->control('api_token', [
-        'label' => __d('CakeDC/Users', 'API token')
-    ]);
-    echo $this->Form->control('activation_date', [
-        'label' => __d('CakeDC/Users', 'Activation date')
-    ]);
-    echo $this->Form->control('tos_date', [
-        'label' => __d('CakeDC/Users', 'TOS date')
-    ]);
     echo $this->Form->control('active', [
         'label' => __d('CakeDC/Users', 'Active')
     ]);
@@ -47,21 +34,3 @@ $Users = ${$tableAlias};
 </fieldset>
 <?= $this->Form->button(__d('CakeDC/Users', 'Submit')) ?>
 <?= $this->Form->end() ?>
-<?php if (Configure::read('Users.GoogleAuthenticator.login')) : ?>
-    <fieldset>
-        <legend>Reset Google Authenticator</legend>
-        <?= $this->Form->postLink(
-            __d('CakeDC/Users', 'Reset Google Authenticator Token'), [
-            'plugin' => 'CakeDC/Users',
-            'controller' => 'Users',
-            'action' => 'resetGoogleAuthenticator', $Users->id
-        ], [
-            'class' => 'btn btn-danger',
-            'confirm' => __d(
-                'CakeDC/Users',
-                'Are you sure you want to reset token for user "{0}"?', $Users->username
-            )
-        ]);
-        ?>
-    </fieldset>
-<?php endif; ?>

@@ -7,12 +7,17 @@ use SpongeUsers\Controller\AppController;
 use Cake\Controller\Component\AuthComponent;
 use CakeDC\Users\Controller\Traits\LoginTrait;
 use CakeDC\Users\Controller\Traits\ProfileTrait;
+use CakeDC\Users\Controller\Traits\PasswordManagementTrait;
+use CakeDC\Users\Controller\Traits\RegisterTrait;
 use CakeDC\Users\Exception\UserNotFoundException;
+use CakeDC\Users\Exception\UserNotActiveException;
 use CakeDC\Users\Exception\WrongPasswordException;
+use FFI\Exception;
 use Cake\Utility\Inflector;
 use Cake\Core\Configure;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Datasource\Exception\InvalidPrimaryKeyException;
+
 
 /**
  * SpongeUsers Controller
@@ -25,6 +30,8 @@ class SpongeUsersController extends AppController
 
     use LoginTrait;
     use ProfileTrait;
+    use PasswordManagementTrait;
+    use RegisterTrait;
 
     /**
      * Profile action
@@ -266,6 +273,47 @@ class SpongeUsersController extends AppController
         }
         $this->set(['user' => $user]);
         $this->set('_serialize', ['user']);
+    }
+
+    /**
+     * Reset password
+     *
+     * @return void|\Cake\Http\Response
+     */
+    public function requestResetPassword()
+    {
+        $this->set('user', $this->getUsersTable()->newEntity([], ['validate' => false]));
+        $this->set('_serialize', ['user']);
+        if (!$this->getRequest()->is('post')) {
+            return;
+        }
+
+        $reference = $this->getRequest()->getData('reference');
+        try {
+            $resetUser = $this->getUsersTable()->resetToken($reference, [
+                'expiration' => Configure::read('Users.Token.expiration'),
+                'checkActive' => false,
+                'sendEmail' => true,
+                'ensureActive' => Configure::read('Users.Registration.ensureActive'),
+                'type' => 'password',
+            ]);
+            if ($resetUser) {
+                $msg = __d('cake_d_c/users', 'Please check your email to continue with password reset process');
+                $this->Flash->success($msg);
+            } else {
+                $msg = __d('cake_d_c/users', 'The password token could not be generated. Please try again');
+                $this->Flash->error($msg);
+            }
+
+            return $this->redirect(['action' => 'login']);
+        } catch (UserNotFoundException $exception) {
+            $this->Flash->error(__d('cake_d_c/users', 'User {0} was not found', $reference));
+        } catch (UserNotActiveException $exception) {
+            $this->Flash->error(__d('cake_d_c/users', 'The user is not active'));
+        } catch (Exception $exception) {
+            $this->Flash->error(__d('cake_d_c/users', 'Token could not be reset'));
+            $this->log($exception->getMessage());
+        }
     }
 
     /**

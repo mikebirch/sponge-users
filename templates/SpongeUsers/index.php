@@ -27,28 +27,28 @@
     </tr>
     </thead>
     <tbody>
-    <?php foreach (${$tableAlias} as $user) : ?>
+    <?php foreach (${$tableAlias} as $person) : ?>
         <tr>
             <td class="actions">
                 <?php if($user->is_superuser) : ?>
-                <?= $this->Delete->createForm(['action' => 'delete', $user->id]) ?>
+                <?= $this->Delete->createForm(['action' => 'delete', $person->id]) ?>
                 <?php endif ?>
-                <?= $this->Html->link('View', ['action' => 'view', $user->id]) ?>
+                <?= $this->Html->link('View', ['action' => 'view', $person->id]) ?>
                 <?php if($user->is_superuser) : ?>
-                <?= $this->Html->link('Change password', ['action' => 'changePassword', $user->id]) ?>
-                <?= $this->Html->link('Edit', ['action' => 'edit', $user->id]) ?>
+                <?= $this->Html->link('Change password', ['action' => 'changePassword', $person->id]) ?>
+                <?= $this->Html->link('Edit', ['action' => 'edit', $person->id]) ?>
                 <?php endif ?>
             </td>
-            <td><?= h($user->username) ?></td>
-            <td><?= h($user->email) ?></td>
-            <td><?= h($user->first_name) ?></td>
-            <td><?= h($user->last_name) ?></td>
-            <td><?= h($user->role) ?></td>
+            <td><?= h($person->username) ?></td>
+            <td><?= h($person->email) ?></td>
+            <td><?= h($person->first_name) ?></td>
+            <td><?= h($person->last_name) ?></td>
+            <td><?= h($person->role) ?></td>
             <?php
                 $yes = '<svg class="icon icon-checkmark-circle"><use xlink:href="/img/admin/icons.svg#icon-checkmark-circle"></use></svg><span>Yes</span>';
                 $no = '<svg class="icon icon-cancel-circle"><use xlink:href="/img/admin/icons.svg#icon-cancel-circle"></use></svg><span>No</span>';
             ?>
-            <td class=" hide-text"><?= h($user->active) == 1 ? $yes : $no ?></td>
+            <td class=" hide-text"><?= h($person->active) == 1 ? $yes : $no ?></td>
         </tr>
 
     <?php endforeach; ?>
